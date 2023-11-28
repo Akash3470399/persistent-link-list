@@ -67,11 +67,11 @@ int disk_init(char *diskname)
 	disk_wr((unsigned char*)&y, ptr_size, t-ptr_size);
 
 	bm = bitmap_init(preoccupied_data_nodes, 0xFF);
-	disk_wr(bm->arr, preoccupied_data_nodes, x);
+	disk_wr(bm->arr, preoccupied_data_nodes, data_list_base-preoccupied_data_nodes);
 	destroy_bitmap(bm);
 
 	bm = bitmap_init(preoccupied_main_nodes, 0xFF);
-	disk_wr(bm->arr, preoccupied_main_nodes, y);
+	disk_wr(bm->arr, preoccupied_main_nodes, t - ptr_size - preoccupied_main_nodes);
 	destroy_bitmap(bm);
 }
 
@@ -121,9 +121,8 @@ int disk_rd(unsigned char *bitsarr, int datalen, int filepos)
 	int i = 0;
 	while(rdbits < datalen)
 	{
-		bitscnt = (datalen < 8)? datalen: 8;
-		bitsarr[i++] = bits_get(buffer, startpos, bitscnt);
-		startpos = 0;
+		bitscnt = ((datalen - rdbits) < 8)? (datalen-rdbits): 8;
+		bitsarr[i++] = bits_get(buffer, startpos+rdbits ,bitscnt);
 		rdbits += bitscnt;
 	}
 

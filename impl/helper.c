@@ -79,3 +79,30 @@ int get_filesize(char *filenm)
 		printf("err while caculating file size : %s\n", filenm);
 	return size;
 }
+
+// takes 4 bytes of memery array and return int forming from it.
+unsigned int bytestonum(unsigned char *arr)
+{
+	// setting all bits to 0 so that bits can copy using or operation.
+	unsigned int num = 0, n;	
+	for(int i = 3; i > -1; i--)
+	{
+		num = num << 8;		
+		num |= arr[i];		// copoing 1byte to lower 8 bits.
+	}
+	//n = (unsigned int)le32toh((uint32_t)num);				// converting back from little endian notation
+	return num;
+}
+
+// store 4 bytes of integer(num) into buffer array.
+void numtobytes(unsigned char *buffer, unsigned int num)
+{
+	// unsigned int num = (unsigned int)htole32((uint32_t)n);		// converting to little endian notation
+	for(int i = 0; i < 4; i++)
+  	{
+		// extract first 8 bits & shift it to lower 8 bits 
+		// to copy it in char array 
+		buffer[i] = (num & 0xFF);	
+		num = num>>8;
+  	}
+}

@@ -17,7 +17,7 @@ unsigned int data_bitmap_size, main_bitmap_size;
 long data_list_base, main_list_base;
 int ptr_size;
 long x, y;
-
+bitmap *main_bitmap = NULL, *data_bitmap = NULL;
 void disk_calculations(char *diskname)
 {
 	
@@ -39,11 +39,17 @@ void disk_calculations(char *diskname)
 	main_bitmap_size = t/m;
 
 	data_list_base = ptr_size + data_bitmap_size;
-	main_list_base = t - (ptr_size + main_bitmap_size) - m;	// as reverse
+	main_list_base = t - (ptr_size + main_bitmap_size) - m;	// as reverse	
+
+	data_bitmap = bitmap_init(data_bitmap_size, 0);
+	main_bitmap = bitmap_init(main_bitmap_size, 0);
 
 	disk_rd((unsigned char*)&x, ptr_size, 0);
 	disk_rd((unsigned char*)&y, ptr_size, t-ptr_size);
-	
+
+	disk_rd(data_bitmap->arr, data_bitmap_size, ptr_size);
+	disk_rd(main_bitmap->arr, main_bitmap_size, main_list_base + m);
+
 	fprintf(stdout, "t %ld , ptr size %d, data ll bitmap size %d, main ll bitmap size %d\n", t, ptr_size, data_bitmap_size, main_bitmap_size);
 	fprintf(stdout, "data list base : %ld, main_list_base %ld\n", data_list_base, main_list_base);
 }

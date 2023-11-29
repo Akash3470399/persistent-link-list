@@ -47,8 +47,44 @@ void bitmap_reset(bitmap *bm, int pos)
 	if(bm != NULL)
 		bm->arr[byteno] &= ~(1<<bitpos);
 }
+
+int bitmap_isset(bitmap *bm, int pos)
+{
+	int byteno = pos/8, bitpos=pos % 8;
+	if(bm != NULL)
+		return ((bm->arr[byteno] & 1<<bitpos)>>bitpos);
+}
+
+
+void bitmap_print(bitmap *bm)
+{
+	FILE *fp = fopen("bitmap", "wb+");
+	
+	if(fp == NULL)
+	{
+		printf("Can't get bitmap at this moment.\n");
+		return;
+	}
+	fprintf(fp, "bitmap len %d\nbitmap:\n%8x ", bm->len, 0);
+	int arrlen = mceil(bm->len, 8);
+	for(int i = 0; i < arrlen; i++)
+	{
+		
+		for(int j = 7; j >= 0; j--)
+			fprintf(fp, "%d", (bm->arr[i] & (1<<j))>>j);
+		
+		fprintf(fp, " ");
+
+		if((i+1) % 8 == 0)
+			fprintf(fp, "\n%8x ", i+1);
+	}
+	fclose(fp);
+}
+
 void destroy_bitmap(bitmap *bm)
 {
 	free(bm->arr);
 	free(bm);
 }
+
+

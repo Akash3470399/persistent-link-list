@@ -58,3 +58,15 @@ int bits_put(unsigned char *bitsarr, int start, unsigned char *dataarr, int bits
 	}
 	return wrbits;
 }
+
+void bits_copy(unsigned char *to, unsigned char *from, int start, int len)
+{
+	int i = 0, wrbits = 0, bitscnt;
+	while(wrbits < len)
+	{
+		bitscnt = ((len-wrbits) > 8)? 8 : (len-wrbits);
+		to[i++] = bits_get(from, start + wrbits, bitscnt);
+		wrbits += bitscnt;
+	}
+}
+

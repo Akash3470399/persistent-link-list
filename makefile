@@ -17,4 +17,4 @@ $(obj)/%.o : $(impl)/%.c
 	@$(CC) $< -o $@ -c $(CFLAGS)
 
 clean:
-	@rm obj/* a.out disk/*
+	@rm obj/* a.out disk/* bitmap

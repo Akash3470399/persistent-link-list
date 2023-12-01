@@ -1,0 +1,24 @@
+
+Maintain a link list of link list of integer in file
+(double link list)
+
+there are 2 link type of link list
+	1. main link list 
+		holds the head of data link list
+
+	2. data link list 
+		link list in which actual data is present
+
+
+
+	[ m1 ] -> [ d1 ] -> [ d2 ] ....  			 
+      |				
+	  v										here mi's are the main link list nodes
+	[ m2 ] -> [ d8 ] -> [ d8 ] ....			and di's are data link list nodes
+	  |
+	  v
+	[ m3 ] -> .....
+	  .
+	  .
+	  .
+	[ mk ]

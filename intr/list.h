@@ -1,9 +1,15 @@
 #ifndef LIST_H
 #define LIST_H
 
+
+#define MLLSTRT 0
+
+
 typedef struct search_result search_result;
 typedef struct main_link_list_node mlln;
 typedef struct data_link_list_node dlln;
+
+
 
 
 struct search_result
@@ -14,17 +20,17 @@ struct search_result
 
 struct main_link_list_node
 {
-	int left, data, right;
+	int pre, data, next;
 };
 
 struct data_link_list_node
 {
-	int left, data, right;
+	int pre, data, next;
 };
 
 int getnlists();
 search_result read(int listno, int nodeno);
-int write(int listno, int nodeno, int data);	// overwrite
+int llwrite(int listno, int nodeno, int data);	// overwrite
 int addlist(int position);
 int listsize(int listno);
 int insert(int listno, int nodeno, int data);

@@ -13,12 +13,15 @@ long t = 18;		// disk size in bits
 int m = 54;		// main link list node size
 int d = 68; 	// data link list node size
 
-unsigned int data_bitmap_size, main_bitmap_size;
+unsigned int data_bitmap_size, main_bitmap_size, sblk;
 long data_list_base, main_list_base;
 int ptr_size;
 long x, y;
 bitmap *main_bitmap = NULL, *data_bitmap = NULL;
-void disk_calculations(char *diskname)
+
+
+
+void disk_config(char *diskname)
 {
 	
 	int filesize;
@@ -44,6 +47,8 @@ void disk_calculations(char *diskname)
 	data_bitmap = bitmap_init(data_bitmap_size, 0);
 	main_bitmap = bitmap_init(main_bitmap_size, 0);
 
+	sblk = data_bitmap_size -1;
+
 	disk_rd((unsigned char*)&x, ptr_size, 0);
 	disk_rd((unsigned char*)&y, ptr_size, t-ptr_size);
 
@@ -60,7 +65,7 @@ int disk_init(char *diskname)
 	int preoccupied_space, preoccupied_data_nodes, preoccupied_main_nodes, ones;
 	bitmap *bm;
 
-	disk_calculations(diskname);
+	disk_config(diskname);
 	preoccupied_space = (ptr_size * 2) + data_bitmap_size + main_bitmap_size;
 
 	preoccupied_data_nodes = mceil(preoccupied_space, d);
@@ -81,7 +86,19 @@ int disk_init(char *diskname)
 	destroy_bitmap(bm);
 }
 
-	// ********* datalen calculations *********
+void disk_update_config()
+{
+
+	disk_wr((unsigned char*)&x, ptr_size, 0);
+	disk_wr((unsigned char*)&y, ptr_size, t-ptr_size);
+	
+	disk_wr(main_bitmap->arr, main_bitmap->len, main_list_base + m);
+	disk_wr(data_bitmap->arr, data_bitmap->len, ptr_size);
+
+}
+
+
+	// ********* datalen config *********
 	// e.g filepos = 7 & datalen = 3
 	// as to store data we only 3 bits & 3 bits can be store in one byte
 	// but as in startbyte byte we only have 1 bit available so we need fetch
@@ -131,7 +148,6 @@ int disk_rd(unsigned char *bitsarr, int datalen, int filepos)
 		bitsarr[i++] = bits_get(buffer, startpos+rdbits ,bitscnt);
 		rdbits += bitscnt;
 	}
-
 	return rdbits;
 }
 

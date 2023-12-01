@@ -37,7 +37,9 @@ void bitmap_set(bitmap *bm, int pos)
 {
 	int byteno = pos/8, bitpos = pos % 8;
 	if(bm != NULL)
+	{
 		bm->arr[byteno] |= 1<<bitpos;	
+	}
 }
 
 void bitmap_reset(bitmap *bm, int pos)
@@ -45,7 +47,9 @@ void bitmap_reset(bitmap *bm, int pos)
 	int byteno = pos/8, bitpos=pos % 8;
 
 	if(bm != NULL)
+	{
 		bm->arr[byteno] &= ~(1<<bitpos);
+	}
 }
 
 int bitmap_isset(bitmap *bm, int pos)
@@ -55,6 +59,23 @@ int bitmap_isset(bitmap *bm, int pos)
 		return ((bm->arr[byteno] & 1<<bitpos)>>bitpos);
 }
 
+int bitmap_getpos(bitmap *bm)
+{
+	int bytes = mceil(bm->len, 8), pos = -1;
+	for(int i = 0; i < bytes; i++)
+	{
+		if(bm->arr[i] != 0xFF)
+		{
+			for(int j = 0; j < 8 && pos == -1; j++)
+				if(bitmap_isset(bm, i*8 + j) == 0)
+				{
+					bm->arr[i] |= (1<<j);
+					pos = (i*8 + j); 
+				}
+		}
+	}
+	return pos;
+}
 
 void bitmap_print(bitmap *bm)
 {

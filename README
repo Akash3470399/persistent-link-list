@@ -22,3 +22,30 @@ there are 2 link type of link list
 	  .
 	  .
 	[ mk ]
+
+
+
+Approch:
+	A file with fixed length is treated as disk. First calculated how many main link list blocs can be calculated depending upon filesize & node size.
+	Then there are 2 bitmaps which keep the record of which blocks are free & which are occupied.
+										
+											
+				
+										X																														Y	
+			 ___________________________v_______________________________________________________________________________________________________________________v___________
+			|	x	|	data node bitmap	| data link list nodes......											....main link list nodes|	main node bitmap	|	y	|
+			|_______|_______________________|_______________________________________________________________________________________________|_______________________|_______|
+
+																Disk (file here) sotring the link list of link list.
+
+
+	file is divide into multiple parts as shown in above diagram.
+	
+	When new data block is to be added we will check the availability, and then will add new block to that space & will mark that block is taken by data link list node.
+	Also we will reduce one bloc from the main node bitmap as data link list node has used the spece & that space is not available to store main link list node.
+	Same process will be followed while adding new main list node, & one block form data node bitmap will be reduced.
+
+	As we will use some of space for bitmaps, so that much space will not be avalible for the nodes. So in bitmaps we will mark that much block has been preoccupied.
+	
+	x : Gives the last node avalable for data node bitmap
+	y : Gives the last node avalable for main node bitmap

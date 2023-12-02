@@ -13,8 +13,8 @@
 	each node have pre & next pointers
 
 							pre		 ___________	next
-		new node	<-------|   N       			|------>
-									|___________|
+		new node            <--------|   N      	|------>
+								    |___________|
 
 
 						 ___________	next ___________

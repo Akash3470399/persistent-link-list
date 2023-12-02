@@ -13,7 +13,7 @@
 	each node have pre & next pointers
 
 							pre		 ___________	next
-		new node			<-------|   N       |------>
+		new node	<-------|   N       			|------>
 									|___________|
 
 
@@ -45,10 +45,56 @@ int getnlists()
 	return count;
 }
 
+// function return search_result struct it have 2 members
+// 	1. found 		: 1 if listno & nodeno are valid & data read is successfull else 0
+// 	2. data 		: data that read
+search_result llread(int listno, int nodeno)
+{
+	search_result sr = {0, 0};
+	int mnode_blk = MLLSTRT, dnode_blk, llstart, ret = 0, itr = nodeno;
+	mlln mnode;
+	dlln dnode;
+
+	if(listno > 0 && listno <= getnlists())		// valid listno : 1 <= listno <= lengnth of list
+	{
+		mnode = mlln_get(MLLSTRT);
+		for(int i = 1; i < listno; i++)
+		{
+			mnode_blk = mnode.next; 
+			mnode = mlln_get(mnode.next);
+		}
+
+		dnode_blk = mnode.data;
+		if (dnode_blk != sblk)				 
+		{
+			dnode = dlln_get(dnode_blk);
+			while(dnode.next != dnode_blk && itr > 1)	// find the nodeno position in list
+			{
+				dnode_blk = dnode.next;
+				dnode = dlln_get(dnode.next);
+				itr -= 1;
+			}
+
+			if(itr == 1)								// we reached at requested node
+			{
+				sr.found = 1;
+				sr.data = dnode.data;
+			}
+		}
+	}
+	return sr;
+}
+
 
 // add an empty data list at specified position in main link list 
 // position starts from 1
 // on success returns position else -1
+//
+//	How insertin at position 1 happens
+//		There is fixed block which is first block of the main link list which is given by MLLSTRT.
+//		when new node to added to position 1, then node at MLLSTRT is moved to another free block
+//		and at MLLSTRT new node is stored.
+//	
 int addlist(int position)
 {
 
@@ -62,12 +108,28 @@ int addlist(int position)
 		{
 			bitmap_set(main_bitmap, MLLSTRT);
 			N.pre = MLLSTRT, N.data = sblk, N.next = MLLSTRT;
-			mlln_put(N, MLLSTRT);
 		}
 		else												// when main link list is not empty
 		{
+			mnode_blk = bitmap_getpos(main_bitmap);
+			A = mlln_get(MLLSTRT);
 			
+			// new block
+			N.pre = MLLSTRT, N.data = sblk, N.next = mnode_blk;
+			
+			if(A.next == MLLSTRT)							// if there is only one node
+				A.pre = MLLSTRT, A.next = mnode_blk;
+			else
+			{
+				B = mlln_get(A.next);
+				B.pre = mnode_blk;
+				A.pre = MLLSTRT;
+				mlln_put(B, A.next);
+			}
+
+			mlln_put(A, mnode_blk);
 		}
+		mlln_put(N, MLLSTRT);
 	}
 	else if(position > 0 && position <= getnlists()+1)		// 1 <= position <= length of main link list + 1
 	{
@@ -106,7 +168,7 @@ int addlist(int position)
 		}
 	}
 	else
-		position = -1;
+		position = 0;
 
 	return position;
 
@@ -272,7 +334,6 @@ int insert(int listno, int nodeno, int data)
 			else
 				ret = 0; 										// nodeno is invalid
 		}
-	
 	}
 	return ret;
 }
@@ -280,7 +341,78 @@ int insert(int listno, int nodeno, int data)
 // delete node at nodeno in list listno
 int delete(int listno, int nodeno)
 {
-	
+	int mnode_blk = MLLSTRT, dnode_blk, ret = 0, itr;
+	mlln mnode;
+	dlln dnode, A, B;
+
+	if(listno > 0 && listno <= getnlists())
+	{
+		mnode = mlln_get(MLLSTRT);
+		for(int i = 1; i < listno; i++)
+		{
+			mnode_blk = mnode.next;
+			mnode = mlln_get(mnode.next);
+		}
+
+		dnode_blk = mnode.data;
+		if(dnode_blk != sblk)
+		{
+			dnode = dlln_get(dnode_blk);
+			if(nodeno == 1)
+			{
+				// dnode is first node in link list
+				if(dnode.pre == dnode.next)		// there is only one node in list.
+					mnode.data = sblk;
+				else
+				{
+					B = dlln_get(dnode.next);
+					B.pre = dnode.next;			// pointing B.pre to B
+					mnode.data = dnode.next;	// updating main link list head
+					dlln_put(B, dnode.next);
+				}
+				
+				bitmap_reset(data_bitmap, dnode_blk);
+				mlln_put(mnode, mnode_blk);
+				ret = 1;
+			}
+			else
+			{
+				itr = nodeno;
+				while((dnode.next != dnode_blk) && (itr > 1))
+				{
+					dnode_blk = dnode.next;
+					dnode = dlln_get(dnode.next);
+					itr -= 1;
+				}
+
+				if(itr == 1)						// node to be delete is present
+				{
+					if(dnode.next == dnode_blk)		// delete last
+					{
+						A = dlln_get(dnode.pre);
+						A.next = dnode.pre;
+						dlln_put(A, dnode.pre);
+					}
+					else
+					{
+						A = dlln_get(dnode.pre);
+						B = dlln_get(dnode.next);
+
+						A.next = dnode.next;
+						B.pre = dnode.pre;
+
+						dlln_put(A, dnode.pre);
+						dlln_put(B, dnode.next);
+					}
+
+					bitmap_reset(data_bitmap, dnode_blk);
+					ret = 1;
+				}
+			}
+		}
+	}
+
+	return ret;
 }
 
 // get main link list node at blkno from the disk

@@ -21,7 +21,7 @@ bitmap *main_bitmap = NULL, *data_bitmap = NULL;
 
 
 
-void disk_config(char *diskname)
+int disk_config(char *diskname)
 {
 	
 	int filesize;
@@ -29,7 +29,7 @@ void disk_config(char *diskname)
 	if(diskfp == NULL)
 	{
 		printf("Please check you have provied right disk name.\n");
-		return;
+		return 0;
 	}
 	
 	filesize = get_filesize(diskname);	
@@ -55,8 +55,12 @@ void disk_config(char *diskname)
 	disk_rd(data_bitmap->arr, data_bitmap_size, ptr_size);
 	disk_rd(main_bitmap->arr, main_bitmap_size, main_list_base + m);
 
+	/*
 	fprintf(stdout, "t %ld , ptr size %d, data ll bitmap size %d, main ll bitmap size %d\n", t, ptr_size, data_bitmap_size, main_bitmap_size);
 	fprintf(stdout, "data list base : %ld, main_list_base %ld\n", data_list_base, main_list_base);
+	fprintf(stdout, "data bitmap bast %d, main bitmap base %ld\n", ptr_size, main_list_base+m);
+	*/
+	return 1;
 }
 
 // create and initilize the disk

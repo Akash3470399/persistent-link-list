@@ -29,7 +29,7 @@ struct data_link_list_node
 };
 
 int getnlists();
-search_result read(int listno, int nodeno);
+search_result llread(int listno, int nodeno);
 int llwrite(int listno, int nodeno, int data);	// overwrite
 int addlist(int position);
 int listsize(int listno);

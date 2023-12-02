@@ -15,7 +15,7 @@ extern int ptr_size;
 extern long x, y;
 extern bitmap *main_bitmap, *data_bitmap;
 
-void disk_config(char *diskname);
+int disk_config(char *diskname);
 int disk_init(char *diskname);
 void disk_update_config();
 

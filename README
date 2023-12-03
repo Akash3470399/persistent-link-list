@@ -11,9 +11,9 @@ there are 2 link type of link list
 
 
 
-	[ m1 ] -> [ d1 ] -> [ d2 ] ....  			 
-      |				
-	  v										here mi's are the main link list nodes
+	[ m1 ] -> [ d1 ] -> [ d2 ] ....
+	  |
+	  v						here mi's are the main link list nodes
 	[ m2 ] -> [ d8 ] -> [ d8 ] ....			and di's are data link list nodes
 	  |
 	  v
@@ -31,12 +31,12 @@ Approch:
 										
 											
 				
-										X																														Y	
-			 ___________________________v_______________________________________________________________________________________________________________________v___________
-			|	x	|	data node bitmap	| data link list nodes......											....main link list nodes|	main node bitmap	|	y	|
-			|_______|_______________________|_______________________________________________________________________________________________|_______________________|_______|
+					    X											    Y	
+		 ___________________________v_______________________________________________________________________________________v___________
+		|   x	|  data node bitmap	| data link list nodes......		....main link list nodes|   main node bitmap	|   y	|
+		|_______|_______________________|_______________________________________________________________|_______________________|_______|
 
-																Disk (file here) sotring the link list of link list.
+					Disk (file here) sotring the link list of link list.
 
 
 	file is divide into multiple parts as shown in above diagram.

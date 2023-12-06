@@ -5,9 +5,9 @@
 #define DISK_H
 
 extern FILE *diskfp;
-extern long t ;		// disk size in bits
-extern int m ;		// main link list node size
-extern int d ; 	// data link list node size
+extern long t ;     // disk size in bits
+extern int m ;      // main link list node size
+extern int d ;  // data link list node size
 
 extern unsigned int data_bitmap_size, main_bitmap_size, sblk;
 extern long data_list_base, main_list_base;

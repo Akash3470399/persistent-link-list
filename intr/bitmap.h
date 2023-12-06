@@ -5,8 +5,8 @@ typedef struct bitmap bitmap;
 
 struct bitmap
 {
-	unsigned char *arr;
-	int len;
+    unsigned char *arr;
+    int len;
 };
 
 

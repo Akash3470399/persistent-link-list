@@ -68,9 +68,9 @@ int mceil(int a, int b)
 
 // return the size of file.
 // on error return -1
-int get_filesize(char *filenm)
+long get_filesize(char *filenm)
 {
-    int size = -1;
+    long size = -1;
 
     FILE *fp = fopen(filenm, "r");
     if(fp != NULL)

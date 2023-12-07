@@ -428,15 +428,15 @@ mlln mlln_get(int blkno)
 
     // extracting information from bits
     memset(buffer, 0, 4);
-    bits_copy(buffer, mlln_block, 0, ptr_size);
+    bits_copy(buffer, mlln_block, 0, ptrsize);
     node.pre = bytestonum(buffer);
 
     memset(buffer, 0, 4);
-    bits_copy(buffer, mlln_block, ptr_size, ptr_size);
+    bits_copy(buffer, mlln_block, ptrsize, ptrsize);
     node.data = bytestonum(buffer);
 
     memset(buffer, 0, 4);
-    bits_copy(buffer, mlln_block, ptr_size*2, ptr_size);
+    bits_copy(buffer, mlln_block, ptrsize*2, ptrsize);
     node.next = bytestonum(buffer);
 
     return node;
@@ -455,15 +455,15 @@ int mlln_put(mlln node, int blkno)
     // creating mlln block
     memset(buffer, 0, 4);
     numtobytes(buffer, node.pre);
-    bits_put(mlln_block, 0, buffer, ptr_size);
+    bits_put(mlln_block, 0, buffer, ptrsize);
 
     memset(buffer, 0, 4);
     numtobytes(buffer, node.data);
-    bits_put(mlln_block, ptr_size, buffer, ptr_size);
+    bits_put(mlln_block, ptrsize, buffer, ptrsize);
 
     memset(buffer, 0, 4);
     numtobytes(buffer, node.next);
-    bits_put(mlln_block, ptr_size*2, buffer, ptr_size);
+    bits_put(mlln_block, ptrsize*2, buffer, ptrsize);
 
     res += disk_wr(mlln_block, m, node_base);   // writing block to disk
     fflush(diskfp);
@@ -483,15 +483,15 @@ dlln dlln_get(int blkno)
 
     // extracting information from bits
     memset(buffer, 0, 4);
-    bits_copy(buffer, dlln_block, 0, ptr_size);
+    bits_copy(buffer, dlln_block, 0, ptrsize);
     node.pre = bytestonum(buffer);
 
     memset(buffer, 0, 4);
-    bits_copy(buffer, dlln_block, ptr_size, datasize);  // as data is integer
+    bits_copy(buffer, dlln_block, ptrsize, datasize);  // as data is integer
     node.data = bytestonum(buffer);
 
     memset(buffer, 0, 4);
-    bits_copy(buffer, dlln_block, ptr_size + datasize, ptr_size);
+    bits_copy(buffer, dlln_block, ptrsize + datasize, ptrsize);
     node.next = bytestonum(buffer);
 
     return node;
@@ -509,15 +509,15 @@ int dlln_put(dlln node, int blkno)
     // creating mlln block
     memset(buffer, 0, 4);
     numtobytes(buffer, node.pre);
-    bits_put(dlln_block, 0, buffer, ptr_size);
+    bits_put(dlln_block, 0, buffer, ptrsize);
 
     memset(buffer, 0, 4);
     numtobytes(buffer, node.data);
-    bits_put(dlln_block, ptr_size, buffer, datasize);
+    bits_put(dlln_block, ptrsize, buffer, datasize);
 
     memset(buffer, 0, 4);
     numtobytes(buffer, node.next);
-    bits_put(dlln_block, ptr_size + datasize, buffer, ptr_size);
+    bits_put(dlln_block, ptrsize + datasize, buffer, ptrsize);
 
     res += disk_wr(dlln_block, d, node_base);   // writing block to disk
 

@@ -22,4 +22,4 @@ $(obj)/%.o : $(impl)/%.c
 	@$(CC) $< -o $@ -c $(CFLAGS)
 
 clean:
-	@rm obj/* list disk/* bitmap
+	@rm obj/* list disk/* bitmap saved_list

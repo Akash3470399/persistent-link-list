@@ -3,28 +3,31 @@
 #include <string.h>
 #include <math.h>
 
+#include "consts.h"
 #include "disk.h"
 #include "bitsarr.h"
 #include "bitmap.h"
 #include "helper.h"
 
-FILE *diskfp;
-long t = 18;        // disk size in bits
-int m = 54;     // main link list node size
-int d = 68;     // data link list node size
+FILE *diskfp;   // virt disk fp
+long t ;        // disk size in bits
+int m ;         // main link list node size
+int d ;         // data link list node size
+
+
 
 unsigned int data_bitmap_size, main_bitmap_size, sblk;
-long data_list_base, main_list_base;
-int ptr_size;
-long x, y;
-bitmap *main_bitmap = NULL, *data_bitmap = NULL;
+long data_list_base, main_list_base;                    // base of lists (bit position in file)
+int ptrsize;                                            // pointer size of pointer used in file
+long x, y;                                              // x and y are last valid block in bitmaps
+bitmap *main_bitmap = NULL, *data_bitmap = NULL;     
 
 
-
+// open virt disk & configures disk setting
 int disk_config(char *diskname)
 {
     
-    int filesize;
+    long filesize;
     diskfp = fopen(diskname, "rb+");
     if(diskfp == NULL)
     {
@@ -33,44 +36,46 @@ int disk_config(char *diskname)
     }
     
     filesize = get_filesize(diskname);  
-
-    t = filesize * 8;   // disk size in bits
         
-    ptr_size = ceil(log(t/m)/log(2));
+    ptrsize = _calc_ptrsize(filesize);
 
-    data_bitmap_size = t/d;
-    main_bitmap_size = t/m;
+    t = filesize * 8;
+    d = ptrsize + DATASIZE + ptrsize;                   // as data node have pre, next pointers & data
+    m = ptrsize + ptrsize + ptrsize;                    // as main node have pre, data node & next pointers
 
-    data_list_base = ptr_size + data_bitmap_size;
-    main_list_base = t - (ptr_size + main_bitmap_size) - m; // as reverse   
+    data_bitmap_size = t/d;                             // total data node possible
+    main_bitmap_size = t/m;                             // total main node possible
+
+    data_list_base = ptrsize + data_bitmap_size;
+    main_list_base = t - (ptrsize + main_bitmap_size) - m; // as reverse   
 
     data_bitmap = bitmap_init(data_bitmap_size, 0);
     main_bitmap = bitmap_init(main_bitmap_size, 0);
 
     sblk = data_bitmap_size -1;
 
-    disk_rd((unsigned char*)&x, ptr_size, 0);
-    disk_rd((unsigned char*)&y, ptr_size, t-ptr_size);
+    disk_rd((unsigned char*)&x, ptrsize, 0);
+    disk_rd((unsigned char*)&y, ptrsize, t-ptrsize);
 
-    disk_rd(data_bitmap->arr, data_bitmap_size, ptr_size);
+    disk_rd(data_bitmap->arr, data_bitmap_size, ptrsize);
     disk_rd(main_bitmap->arr, main_bitmap_size, main_list_base + m);
 
-    /*
-    fprintf(stdout, "t %ld , ptr size %d, data ll bitmap size %d, main ll bitmap size %d\n", t, ptr_size, data_bitmap_size, main_bitmap_size);
+    
+    fprintf(stdout, "t %ld , ptr size %d, data ll bitmap size %d, main ll bitmap size %d\n", t, ptrsize, data_bitmap_size, main_bitmap_size);
     fprintf(stdout, "data list base : %ld, main_list_base %ld\n", data_list_base, main_list_base);
-    fprintf(stdout, "data bitmap bast %d, main bitmap base %ld\n", ptr_size, main_list_base+m);
-    */
+    fprintf(stdout, "data bitmap bast %d, main bitmap base %ld\n", ptrsize, main_list_base+m);
+    
     return 1;
 }
 
-// create and initilize the disk
+// initilize the disk
 int disk_init(char *diskname)
 {
     int preoccupied_space, preoccupied_data_nodes, preoccupied_main_nodes, ones;
     bitmap *bm;
 
     disk_config(diskname);
-    preoccupied_space = (ptr_size * 2) + data_bitmap_size + main_bitmap_size;
+    preoccupied_space = (ptrsize * 2) + data_bitmap_size + main_bitmap_size;
 
     preoccupied_data_nodes = mceil(preoccupied_space, d);
     preoccupied_main_nodes = mceil(preoccupied_space, m);
@@ -78,26 +83,26 @@ int disk_init(char *diskname)
     x = data_bitmap_size - preoccupied_data_nodes;   
     y = main_bitmap_size - preoccupied_main_nodes;
 
-    disk_wr((unsigned char*)&x, ptr_size, 0);
-    disk_wr((unsigned char*)&y, ptr_size, t-ptr_size);
+    disk_wr((unsigned char*)&x, ptrsize, 0);
+    disk_wr((unsigned char*)&y, ptrsize, t-ptrsize);
 
     bm = bitmap_init(preoccupied_data_nodes, 0xFF);
     disk_wr(bm->arr, preoccupied_data_nodes, data_list_base-preoccupied_data_nodes);
     destroy_bitmap(bm);
 
     bm = bitmap_init(preoccupied_main_nodes, 0xFF);
-    disk_wr(bm->arr, preoccupied_main_nodes, t - ptr_size - preoccupied_main_nodes);
+    disk_wr(bm->arr, preoccupied_main_nodes, t - ptrsize - preoccupied_main_nodes);
     destroy_bitmap(bm);
 }
 
 void disk_update_config()
 {
 
-    disk_wr((unsigned char*)&x, ptr_size, 0);
-    disk_wr((unsigned char*)&y, ptr_size, t-ptr_size);
+    disk_wr((unsigned char*)&x, ptrsize, 0);
+    disk_wr((unsigned char*)&y, ptrsize, t-ptrsize);
     
     disk_wr(main_bitmap->arr, main_bitmap->len, main_list_base + m);
-    disk_wr(data_bitmap->arr, data_bitmap->len, ptr_size);
+    disk_wr(data_bitmap->arr, data_bitmap->len, ptrsize);
 
 }
 
@@ -155,3 +160,42 @@ int disk_rd(unsigned char *bitsarr, int datalen, int filepos)
     return rdbits;
 }
 
+
+
+
+/*
+ *      Here t : file size in bits
+ *      k : is pointer size
+ *            
+ *      Equation to find count of main node possible in file with size t bits
+ *               t
+ *      2^k =  -----       (2^k main node blocks)    
+ *               3k 
+ *
+ *       i.e (2^k) * (k) =   t
+ *                          ---
+ *                           3
+ *
+ *       now let k1 = 2^k, t1 = t/3
+ *                      
+ */
+// returns 
+int _calc_ptrsize(long filesize)
+{
+    int k;
+    long p = 1, t1;
+   
+    t1 = (filesize * 8) / 3;    // converted file size into bits & dividing it by 3
+        
+    k = log(t1) / log(2);       // rough value of k 
+    
+    p = (long)1 << k;
+    // reducing k till equation holds true
+    while(p * k >= t1)
+    {
+        k -= 1;
+        p = (long)1 << k;
+    }
+
+    return (k + 1);
+}

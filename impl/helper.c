@@ -30,9 +30,13 @@ long disk_creator(char *dname, long dsize)
 
         fflush(diskfp);
         fclose(diskfp);
+        printf("disk with %ld bytes is created.\n", wrbytes);
     }
     else
+    {
         printf("Disk creation failed\n");
+        wrbytes = -1;
+    }
 
     return wrbytes;
 }

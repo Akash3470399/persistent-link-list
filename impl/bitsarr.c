@@ -23,7 +23,7 @@ unsigned char bits_get(unsigned char *arr, int start, int len)
         result = (arr[startbyte] & mask)>>startpos;
         len -= (8 - startpos); 
     
-        if(len > 0)
+        if(len > 0) // retrive remaining bits from next byte
         {
             mask = (1 <<len) -1;
             result |= (arr[startbyte+1] & mask) << (8 - startpos);
@@ -37,22 +37,25 @@ unsigned char bits_get(unsigned char *arr, int start, int len)
 int bits_put(unsigned char *bitsarr, int start, unsigned char *dataarr, int bitscnt)
 {
     int startbyte = start/8, startpos = start % 8;
-    int space = (8 - startpos), wrbits = 0;
+    int space = (8 - startpos), wrbits = 0; // wrbits is how many bits have been written to bitsarr
     unsigned char ch = 0, mask;
     
     space = ((bitscnt - wrbits) < space) ? (bitscnt - wrbits):space;
 
-    
-
     // here space is min of space avalible(bits) in current byte & bits to be written
     while(wrbits < bitscnt)
     {
+
         ch = 0;
         ch = bits_get(dataarr, wrbits, space);
         ch = ch << startpos;
+        
+        // setting previous bits to 0 
         mask = (1<<space)-1;
         mask = ~(mask<<startpos);
         bitsarr[startbyte] &= mask;
+    
+        // adding expected bits to corresponding byte
         bitsarr[startbyte++] |= ch;
 
         wrbits += space;

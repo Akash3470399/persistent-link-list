@@ -5,6 +5,6 @@
 int main()
 {
     check_or_mkdir("disk");
-    disk_creator("llvd", 1769472);
+    disk_creator("llvd", 17694720);
     disk_init("./disk/llvd");
 }

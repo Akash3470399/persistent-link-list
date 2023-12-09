@@ -4,7 +4,9 @@
 #include "disk.h"
 #include "bitsarr.h"
 #include "helper.h"
-#include "list.h"
+#include "list/core.h"
+#include "list/mainlist.h"
+#include "list/datalist.h"
 
 int main()
 {
@@ -130,6 +132,5 @@ int main()
 
 
     disk_update_config();
-    bitmap_print(data_bitmap);
     fclose(diskfp);
 }

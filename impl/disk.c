@@ -16,11 +16,33 @@ int d ;         // data link list node size
 
 
 
-unsigned int data_bitmap_size, main_bitmap_size, sblk;
-long data_list_base, main_list_base;                    // base of lists (bit position in file)
-int ptrsize;                                            // pointer size of pointer used in file
-long x, y;                                              // x and y are last valid block in bitmaps
-bitmap *main_bitmap = NULL, *data_bitmap = NULL;     
+unsigned int nullblk;
+
+// base of lists (bit position in file)
+long datalist_base, mainlist_base;  
+
+// head of free nodes lists
+long datafreelist_head, mainfreelist_head, mainlist_head;
+
+// pointer size of pointer used in file
+int ptrsize;                                            
+
+// x and y are last valid block in bitmaps
+long x, y;                                              
+
+// store the information related to the bitmap
+bitmap_summary main_bitmap, data_bitmap;
+
+/*
+     _______________________________________________________________________________________________
+    |   |          |        |                                       |        |      |           |   |
+    |   | data     | data   |data nodes ...          ... main nodes | main   | main | main      |   |
+    | x | freelist | list   |                                       | list   | list | free list | y |
+    |   | base     | bitmap |                                       | bitmap | head | base      |   |
+    |___|__________|________|_______________________________________|________|______|___________|___|
+
+                                        Disk structure
+*/
 
 
 // open virt disk & configures disk setting
@@ -43,27 +65,27 @@ int disk_config(char *diskname)
     d = ptrsize + DATASIZE + ptrsize;                   // as data node have pre, next pointers & data
     m = ptrsize + ptrsize + ptrsize;                    // as main node have pre, data node & next pointers
 
-    data_bitmap_size = t/d;                             // total data node possible
-    main_bitmap_size = t/m;                             // total main node possible
+    data_bitmap.size = t/d;                             // total data node possible
+    main_bitmap.size = t/m;                             // total main node possible
 
-    data_list_base = ptrsize + data_bitmap_size;
-    main_list_base = t - (ptrsize + main_bitmap_size) - m; // as reverse   
-
-    data_bitmap = bitmap_init(data_bitmap_size, 0);
-    main_bitmap = bitmap_init(main_bitmap_size, 0);
-
-    sblk = data_bitmap_size -1;
+    data_bitmap.base = (2*ptrsize);
+    main_bitmap.base = t- ((3 * ptrsize) + main_bitmap.size);
+    
+    nullblk = main_bitmap.size -1;
+    
+    disk_rd((unsigned char*)&datafreelist_head, ptrsize, ptrsize);
+    disk_rd((unsigned char*)&mainfreelist_head, ptrsize, (t-(ptrsize * 2)));
+    disk_rd((unsigned char*)&mainlist_head, ptrsize, (t-(ptrsize * 3)));
 
     disk_rd((unsigned char*)&x, ptrsize, 0);
     disk_rd((unsigned char*)&y, ptrsize, t-ptrsize);
-
-    disk_rd(data_bitmap->arr, data_bitmap_size, ptrsize);
-    disk_rd(main_bitmap->arr, main_bitmap_size, main_list_base + m);
-
     
-    fprintf(stdout, "t %ld , ptr size %d, data ll bitmap size %d, main ll bitmap size %d\n", t, ptrsize, data_bitmap_size, main_bitmap_size);
-    fprintf(stdout, "data list base : %ld, main_list_base %ld\n", data_list_base, main_list_base);
-    fprintf(stdout, "data bitmap bast %d, main bitmap base %ld\n", ptrsize, main_list_base+m);
+    datalist_base = (2*ptrsize) + data_bitmap.size;     
+    mainlist_base = t - ((3*ptrsize) + main_bitmap.size) - m; // as reverse   
+
+    fprintf(stdout, "t %ld , ptr size %d, nullblk %d, data ll bitmap size %d, main ll bitmap size %d\n", t, ptrsize, nullblk, data_bitmap.size, main_bitmap.size);
+    fprintf(stdout, "data list base : %ld, mainlist_base %ld\n", datalist_base, mainlist_base);
+    fprintf(stdout, "data bitmap bast %d, main bitmap base %ld\n", ptrsize, mainlist_base+m);
     
     return 1;
 }
@@ -72,27 +94,25 @@ int disk_config(char *diskname)
 int disk_init(char *diskname)
 {
     int preoccupied_space, preoccupied_data_nodes, preoccupied_main_nodes, ones;
-    bitmap *bm;
 
     disk_config(diskname);
-    preoccupied_space = (ptrsize * 2) + data_bitmap_size + main_bitmap_size;
+    
+    datafreelist_head = nullblk, mainfreelist_head = nullblk, mainlist_head = nullblk;
+    disk_wr((unsigned char*)&datafreelist_head, ptrsize, ptrsize);
+    disk_wr((unsigned char*)&mainfreelist_head, ptrsize, (t-(ptrsize * 2)));
+    disk_wr((unsigned char*)&mainlist_head, ptrsize, t-(ptrsize * 3));
 
+    preoccupied_space = (ptrsize * 5) + data_bitmap.size + main_bitmap.size;
     preoccupied_data_nodes = mceil(preoccupied_space, d);
     preoccupied_main_nodes = mceil(preoccupied_space, m);
 
-    x = data_bitmap_size - preoccupied_data_nodes;   
-    y = main_bitmap_size - preoccupied_main_nodes;
+    x = data_bitmap.size - preoccupied_data_nodes;   
+    y = main_bitmap.size - preoccupied_main_nodes;
 
     disk_wr((unsigned char*)&x, ptrsize, 0);
     disk_wr((unsigned char*)&y, ptrsize, t-ptrsize);
-
-    bm = bitmap_init(preoccupied_data_nodes, 0xFF);
-    disk_wr(bm->arr, preoccupied_data_nodes, data_list_base-preoccupied_data_nodes);
-    destroy_bitmap(bm);
-
-    bm = bitmap_init(preoccupied_main_nodes, 0xFF);
-    disk_wr(bm->arr, preoccupied_main_nodes, t - ptrsize - preoccupied_main_nodes);
-    destroy_bitmap(bm);
+    
+    init_bitmaps();
 }
 
 void disk_update_config()
@@ -101,9 +121,6 @@ void disk_update_config()
     disk_wr((unsigned char*)&x, ptrsize, 0);
     disk_wr((unsigned char*)&y, ptrsize, t-ptrsize);
     
-    disk_wr(main_bitmap->arr, main_bitmap->len, main_list_base + m);
-    disk_wr(data_bitmap->arr, data_bitmap->len, ptrsize);
-
 }
 
 

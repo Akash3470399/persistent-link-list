@@ -45,15 +45,21 @@ Approch:
 										
 											
 				
-					    X											    Y	
-		 ___________________________v_______________________________________________________________________________________v___________
-		|   x	|  data node bitmap	| data link list nodes......		....main link list nodes|   main node bitmap	|   y	|
-		|_______|_______________________|_______________________________________________________________|_______________________|_______|
+     ________________________________________________________________________________________________
+    |   |           |        |                                       |        |      |           |   |
+    |   | next      | data   |data nodes ...          ... main nodes | main   | main | next      |   |
+    | x | free data | list   |                                       | list   | list | free main | y |
+    |   | block ptr | bitmap |                                       | bitmap | head | block     |   |
+    |___|___________|________|_______________________________________|________|______|___________|___|
+    
+        x: data list last valid block
+        y: main list last balid block
+    
+                                        Disk structure
 
-					Disk (file here) sotring the link list of link list.
-
-
-	file is divide into multiple parts as shown in above diagram.
+    
+	
+    file is divide into multiple parts as shown in above diagram.
 	
 	When new data block is to be added we will check the availability, and then will add new block to that space & will mark that block is taken by data link list node.
 	Also we will reduce one bloc from the main node bitmap as data link list node has used the spece & that space is not available to store main link list node.

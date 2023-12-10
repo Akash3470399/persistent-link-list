@@ -20,26 +20,26 @@ unsigned int nullblk;
 
 // base of lists (bit position in file)
 long datalist_base, mainlist_base;  
+ 
+// list heads
+int mainlist_head, datafreelist, mainfreelist;
 
-// head of free nodes lists
-long datafreelist_head, mainfreelist_head, mainlist_head;
+// main link list length
+long mainlist_length;
 
 // pointer size of pointer used in file
 int ptrsize;                                            
-
-// x and y are last valid block in bitmaps
-long x, y;                                              
 
 // store the information related to the bitmap
 bitmap_summary main_bitmap, data_bitmap;
 
 /*
-     _______________________________________________________________________________________________
-    |   |          |        |                                       |        |      |           |   |
-    |   | data     | data   |data nodes ...          ... main nodes | main   | main | main      |   |
-    | x | freelist | list   |                                       | list   | list | free list | y |
-    |   | base     | bitmap |                                       | bitmap | head | base      |   |
-    |___|__________|________|_______________________________________|________|______|___________|___|
+     ________________________________________________________________________________________________
+    |   |           |        |                                       |        |      |           |   |
+    |   | next      | data   |data nodes ...          ... main nodes | main   | main | next      |   |
+    | x | free data | list   |                                       | list   | list | free main | y |
+    |   | block ptr | bitmap |                                       | bitmap | head | block     |   |
+    |___|___________|________|_______________________________________|________|______|___________|___|
 
                                         Disk structure
 */
@@ -48,8 +48,8 @@ bitmap_summary main_bitmap, data_bitmap;
 // open virt disk & configures disk setting
 int disk_config(char *diskname)
 {
-    
     long filesize;
+    unsigned char buffer[BUFLEN];
     diskfp = fopen(diskname, "rb+");
     if(diskfp == NULL)
     {
@@ -73,56 +73,85 @@ int disk_config(char *diskname)
     
     nullblk = main_bitmap.size -1;
     
-    disk_rd((unsigned char*)&datafreelist_head, ptrsize, ptrsize);
-    disk_rd((unsigned char*)&mainfreelist_head, ptrsize, (t-(ptrsize * 2)));
-    disk_rd((unsigned char*)&mainlist_head, ptrsize, (t-(ptrsize * 3)));
-
-    disk_rd((unsigned char*)&x, ptrsize, 0);
-    disk_rd((unsigned char*)&y, ptrsize, t-ptrsize);
-    
     datalist_base = (2*ptrsize) + data_bitmap.size;     
     mainlist_base = t - ((3*ptrsize) + main_bitmap.size) - m; // as reverse   
+    
+    // reading settings(metadata) from disk
+    memset(buffer, 0, BUFLEN);
+    disk_rd(buffer, ptrsize, 0);
+    data_bitmap.lastptr = bytestonum(buffer);
+
+    memset(buffer, 0, BUFLEN);
+    disk_rd(buffer, ptrsize, t-ptrsize);
+    main_bitmap.lastptr = bytestonum(buffer);
+
+    memset(buffer, 0, BUFLEN);
+    disk_rd(buffer, ptrsize, ptrsize);
+    data_bitmap.nextfreeblk = bytestonum(buffer);
+
+    memset(buffer, 0, BUFLEN);
+    disk_rd(buffer, ptrsize, (t-(ptrsize * 2)));
+    main_bitmap.nextfreeblk = bytestonum(buffer);
+    
+    memset(buffer, 0, BUFLEN);
+    disk_rd(buffer, ptrsize, (t-(ptrsize * 3)));
+    mainlist_head = bytestonum(buffer);
+
+    mainlist_length = main_bitmap.nextfreeblk;
+    datafreelist = nullblk, mainfreelist = nullblk;     // marking freelists as empty
+
 
     fprintf(stdout, "t %ld , ptr size %d, nullblk %d, data ll bitmap size %d, main ll bitmap size %d\n", t, ptrsize, nullblk, data_bitmap.size, main_bitmap.size);
     fprintf(stdout, "data list base : %ld, mainlist_base %ld\n", datalist_base, mainlist_base);
-    fprintf(stdout, "data bitmap bast %d, main bitmap base %ld\n", ptrsize, mainlist_base+m);
+    fprintf(stdout, "next free data block %d, next free main block %d, main list head %d\n", data_bitmap.nextfreeblk, main_bitmap.nextfreeblk, mainlist_head);
     
+
     return 1;
 }
 
 // initilize the disk
 int disk_init(char *diskname)
 {
+    unsigned char buffer[BUFLEN];
     int preoccupied_space, preoccupied_data_nodes, preoccupied_main_nodes, ones;
 
     disk_config(diskname);
     
-    datafreelist_head = nullblk, mainfreelist_head = nullblk, mainlist_head = nullblk;
-    disk_wr((unsigned char*)&datafreelist_head, ptrsize, ptrsize);
-    disk_wr((unsigned char*)&mainfreelist_head, ptrsize, (t-(ptrsize * 2)));
-    disk_wr((unsigned char*)&mainlist_head, ptrsize, t-(ptrsize * 3));
-
     preoccupied_space = (ptrsize * 5) + data_bitmap.size + main_bitmap.size;
     preoccupied_data_nodes = mceil(preoccupied_space, d);
     preoccupied_main_nodes = mceil(preoccupied_space, m);
 
-    x = data_bitmap.size - preoccupied_data_nodes;   
-    y = main_bitmap.size - preoccupied_main_nodes;
+    data_bitmap.lastptr = data_bitmap.size - preoccupied_data_nodes;   
+    main_bitmap.lastptr = main_bitmap.size - preoccupied_main_nodes;
 
-    disk_wr((unsigned char*)&x, ptrsize, 0);
-    disk_wr((unsigned char*)&y, ptrsize, t-ptrsize);
-    
+    mainlist_head = nullblk;        // main list is empty
+    // as next initially all blocks are free & firts block is 0
+    main_bitmap.nextfreeblk = 0, data_bitmap.nextfreeblk = 0;
+
+    // writing to virt disk
+    memset(buffer, 0, BUFLEN);
+    numtobytes(buffer, data_bitmap.nextfreeblk);
+    disk_wr(buffer, ptrsize, ptrsize);
+
+
+    memset(buffer, 0, BUFLEN);
+    numtobytes(buffer, main_bitmap.nextfreeblk);
+    disk_wr(buffer, ptrsize, (t-(ptrsize * 2)));
+
+    memset(buffer, 0, BUFLEN);
+    numtobytes(buffer, mainlist_head);
+    disk_wr(buffer, ptrsize, t-(ptrsize * 3));
+
+    memset(buffer, 0, BUFLEN);
+    numtobytes(buffer, data_bitmap.lastptr);
+    disk_wr(buffer, ptrsize, 0);
+
+    memset(buffer, 0, BUFLEN);
+    numtobytes(buffer, main_bitmap.lastptr);
+    disk_wr(buffer, ptrsize, t-ptrsize);
+   
     init_bitmaps();
 }
-
-void disk_update_config()
-{
-
-    disk_wr((unsigned char*)&x, ptrsize, 0);
-    disk_wr((unsigned char*)&y, ptrsize, t-ptrsize);
-    
-}
-
 
     // ********* datalen config *********
     // e.g filepos = 7 & datalen = 3

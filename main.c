@@ -4,9 +4,6 @@
 #include "disk.h"
 #include "bitsarr.h"
 #include "helper.h"
-#include "list/core.h"
-#include "list/mainlist.h"
-#include "list/datalist.h"
 
 int main()
 {

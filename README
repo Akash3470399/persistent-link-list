@@ -3,7 +3,7 @@ Open README file to view, as i have tried to show some diagram using text only s
 
 How to use it.
 
-> make disk
+> make disk_creator
 > make run
 > ./list
 

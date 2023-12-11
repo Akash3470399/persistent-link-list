@@ -36,4 +36,5 @@ int disk_rd(unsigned char *, int datalen, int filepos);
 
 // internal methods
 int _calc_ptrsize(long filesize);
+void update_mainlist_head(int newhead);
 #endif

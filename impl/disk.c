@@ -245,3 +245,14 @@ int _calc_ptrsize(long filesize)
 
     return (k + 1);
 }
+
+// update the 
+void update_mainlist_head(int newhead)
+{
+    int bitpos = (t-(ptrsize * 3));
+    unsigned char buffer[BUFLEN];
+
+    memset(buffer, 0, BUFLEN);
+    numtobytes(buffer, newhead);
+    disk_wr(buffer, ptrsize, bitpos);
+}

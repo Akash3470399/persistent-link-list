@@ -7,21 +7,23 @@
 #include "disk.h"
 
 
-void load_lastptr(bitmap_summary *bitmap_ptr)
-{
-    unsigned char buffer[BITMAP_BUFLEN];
-    int bufsize = (BITMAP_BUFLEN * 8), rdbits = 0;
-    long base, count;
 
-    count = bitmap_ptr->lastptr / 8;
-    
-    while(count > 0)
-    {
-        disk_rd(buffer, bufsize, bitmap_ptr->base + rdbits);
-    }
+void set(bitmap_summary bitmap, int bitno)
+{
+    unsigned char ch = 1;
+    int bitpos = (bitmap.base + bitno)/8;
+
+    disk_wr(&ch, 1, bitpos); 
 
 }
 
+void reset(bitmap_summary bitmap, int bitno)
+{ 
+    unsigned char ch = 0;
+    int bitpos = (bitmap.base + bitno)/8;
+
+    disk_wr(&ch, 1, bitpos); 
+}
 
 // initilize the bitmaps to 0 & only setting the preoccupied blocks to 1
 void init_bitmaps()

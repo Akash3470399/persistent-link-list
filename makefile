@@ -1,6 +1,6 @@
 
 CC = gcc
-CFLAGS = -lm -I./intr
+CFLAGS = -lm -I./intr -g
 
 impl = ./impl
 obj = ./obj
@@ -10,7 +10,7 @@ impl_files += $(wildcard $(impl)/list/*.c)
 obj_files = $(patsubst $(impl)/%.c, $(obj)/%.o, $(impl_files))
 
 run: $(obj_files)
-	$(CC) main.c $^ -o list $(CFLAGS)	
+	$(CC) try.c $^ -o list $(CFLAGS)	
 
 .PHONY:disk_creator
 disk_creator: $(obj)/bitmap.o $(obj)/helper.o $(obj)/bitsarr.o $(obj)/disk.o 

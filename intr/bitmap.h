@@ -9,7 +9,8 @@ struct bitmap_summary
     long base;
 };
 
-
+void set(bitmap_summary bitmap, int pos);
+void reset(bitmap_summary bitmap, int pos);
 void init_bitmaps();
 void load_bitmap_summary(bitmap_summary *);
 #endif

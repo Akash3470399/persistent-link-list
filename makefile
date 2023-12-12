@@ -11,8 +11,8 @@ obj_files = $(patsubst $(impl)/%.c, $(obj)/%.o, $(impl_files))
 run: $(obj_files)
 	$(CC) main.c $^ -o list $(CFLAGS)	
 
-.PHONY:disk_creator
-disk_creator: $(obj_files)
+.PHONY:disk
+disk: $(obj_files)
 	$(CC) vdd.c $^ $(CFLAGS)
 	@./a.out
 	@rm a.out

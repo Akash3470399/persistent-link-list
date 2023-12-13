@@ -22,7 +22,10 @@ unsigned int nullblk;
 long datalist_base, mainlist_base;  
  
 // list heads
-int mainlist_head, datafreelist, mainfreelist;
+int mainlist_head, datafreelist_head, mainfreelist_head;
+
+// list lengths
+int datafreelist_len, mainfreelist_len;
 
 // main link list length
 long mainlist_length;
@@ -30,8 +33,13 @@ long mainlist_length;
 // pointer size of pointer used in file
 int ptrsize;                                            
 
+// size factors
+// to reduce or include other type of blocks when one type of bocks are deleted
+int sizefactor, maindel, mainused;
+
 // store the information related to the bitmap
 bitmap_summary main_bitmap, data_bitmap;
+
 
 /*
      ________________________________________________________________________________________________
@@ -64,6 +72,8 @@ int disk_config(char *diskname)
     t = filesize * 8;
     d = ptrsize + DATASIZE + ptrsize;                   // as data node have pre, next pointers & data
     m = ptrsize + ptrsize + ptrsize;                    // as main node have pre, data node & next pointers
+
+    sizefactor = mceil(d, m);
 
     data_bitmap.size = t/d;                             // total data node possible
     main_bitmap.size = t/m;                             // total main node possible
@@ -98,8 +108,10 @@ int disk_config(char *diskname)
     mainlist_head = bytestonum(buffer);
 
     mainlist_length = main_bitmap.nextfreeblk;
-    datafreelist = nullblk, mainfreelist = nullblk;     // marking freelists as empty
+    datafreelist_head = nullblk, mainfreelist_head = nullblk;     // marking freelists as empty
 
+    datafreelist_len = 0, mainfreelist_len = 0;
+    maindel = 0, mainused = 0; 
 
     fprintf(stdout, "t %ld , ptr size %d, nullblk %d, data ll bitmap size %d, main ll bitmap size %d\n", t, ptrsize, nullblk, data_bitmap.size, main_bitmap.size);
     fprintf(stdout, "data list base : %ld, mainlist_base %ld\n", datalist_base, mainlist_base);
@@ -252,6 +264,7 @@ void update_mainlist_head(int newhead)
     int bitpos = (t-(ptrsize * 3));
     unsigned char buffer[BUFLEN];
 
+    mainlist_head = newhead;
     memset(buffer, 0, BUFLEN);
     numtobytes(buffer, newhead);
     disk_wr(buffer, ptrsize, bitpos);

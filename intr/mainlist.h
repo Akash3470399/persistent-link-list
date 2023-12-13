@@ -15,6 +15,14 @@ int getnlists();
 // add an empty data list at a position in list
 int addlist(int position);
 
+// return nth main link list node
+mlln getnth(int n);
+
+// when new data block is added that space is not available to main link list node
+void decr_mlln_availability();
+
+// when data block deleted that space is available to main link list to
+void incr_mlln_availability();
 
 mlln new_mlln(int pre, int data, int next);
 

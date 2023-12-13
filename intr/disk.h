@@ -15,13 +15,20 @@ extern unsigned int nullblk;
 extern long datalist_base, mainlist_base;  
 
 // list heads
-extern int mainlist_head, datafreelist, mainfreelist;
+extern int mainlist_head, datafreelist_head, mainfreelist_head;
+
+// list lengths
+extern int datafreelist_len, mainfreelist_len;
 
 // main link list length
 extern long mainlist_length;
 
 // pointer size of pointer used in file
 extern int ptrsize;                                            
+
+// size factors
+// to reduce or include other type of blocks when one type of bocks are deleted
+extern int sizefactor, maindel, mainused;
 
 // store the information related to the bitmap
 extern bitmap_summary main_bitmap, data_bitmap;

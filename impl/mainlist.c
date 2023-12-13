@@ -18,60 +18,76 @@ int getnlists()
 // valid position is 1 <= position <= list length + 1
 int addlist(int position)
 {
-    mlln main_node, helper_node;
+    mlln newnode, tmpnode;
     int ret = 0;
     
     if(position > 0 && position <= (getnlists()+1))
     {
-        main_node = new_mlln(nullblk, nullblk, nullblk);
+        newnode = new_mlln(nullblk, nullblk, nullblk);
         if(position == 1)
         {
-            if(mainlist_head != nullblk)         
+            if(mainlist_head != nullblk)            // main list is not empty
             {
-                helper_node = mlln_load(mainlist_base);
-                helper_node.pre = main_node.base;
-                main_node.next = helper_node.base;
-                mlln_dump(helper_node);
+                tmpnode = mlln_load(mainlist_head);
+                tmpnode.pre = newnode.base;
+                newnode.next = tmpnode.base;
+                mlln_dump(tmpnode);
             }
-            
-            mainlist_length += 1;
-            update_mainlist_head(main_node.base);
+          
+            update_mainlist_head(newnode.base);
         }
         else
         {
             // get (position -1)th node so after we can add new node
-            helper_node = mlln_load(mainlist_head);
+            tmpnode = mlln_load(mainlist_head);
             position -= 1;                      
             for(int i = 1; i < position; i++)
-               helper_node = mlln_load(main_node.next);
+               tmpnode = mlln_load(newnode.next);
            
             // making connection of new node
-            main_node.pre = helper_node.base;
-            main_node.next = helper_node.next;
+            newnode.pre = tmpnode.base;
+            newnode.next = tmpnode.next;
     
             // updating previous node
-            helper_node.next = main_node.base;
-            mlln_dump(helper_node);
+            tmpnode.next = newnode.base;
+            mlln_dump(tmpnode);
             
-            if(main_node.next != nullblk)   // if adding in between to nodes
+            if(newnode.next != nullblk)   // if adding in between to nodes
             {
                 // updating next node
-                helper_node = mlln_load(main_node.next);
-                helper_node.pre = main_node.base;
-                mlln_dump(helper_node);
+                tmpnode = mlln_load(newnode.next);
+                tmpnode.pre = newnode.base;
+                mlln_dump(tmpnode);
             }
         }    
 
-        mlln_dump(main_node);
-        
+        mlln_dump(newnode);
+        mainlist_length += 1;
+        ret = 1;
     }
+    
+    return ret;
 }
 
+// return nth main link list node
+mlln getnth(int n)
+{
+    mlln tmp;
+    
+    if(n > 0 && n <= getnlists())
+    {
+        tmp = mlln_load(mainlist_head);
+        for(int i = 1; i < n; i++)
+            tmp = mlln_load(tmp.next);
+    }
+
+    return tmp;
+}
 
 mlln new_mlln(int pre, int data, int next)
 {
     mlln node ;
-    if(mainfreelist == nullblk)
+    if(mainfreelist_head == nullblk)
     {
         node.base = main_bitmap.nextfreeblk++;
         node.pre = pre, node.data = data, node.next = next;
@@ -83,6 +99,18 @@ mlln new_mlln(int pre, int data, int next)
     }
 
     return node;
+}
+
+// when new data block is added that space is not available to main link list node
+void decr_mlln_availability()
+{
+    main_bitmap.lastptr -= sizefactor;
+}
+
+// when data block deleted that space is available to main link list to
+void incr_mlln_availability()
+{
+    main_bitmap.lastptr += sizefactor;
 }
 
 // get main link list node at blkno from the disk

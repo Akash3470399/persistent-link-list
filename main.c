@@ -4,6 +4,8 @@
 #include "disk.h"
 #include "bitsarr.h"
 #include "helper.h"
+#include "datalist.h"
+#include "mainlist.h"
 
 int main()
 {
@@ -53,7 +55,7 @@ int main()
                     printf("Enter data : ");
                     scanf("%d", &data);
             
-                    if(insert(listno, nodeno, data) > 0)
+                    if(dllinsert(listno, nodeno, data) > 0)
                         printf("Data added\n");
                     else 
                         printf("Please check information you have provied\n");
@@ -64,7 +66,7 @@ int main()
                     printf("Enter node no : ");
                     scanf("%d", &nodeno);
     
-                    sr = llread(listno, nodeno);
+                    sr = dllread(listno, nodeno);
                     if(sr.found == 1)
                         printf("Data is : %d\n", sr.data);
                     else
@@ -76,7 +78,7 @@ int main()
                     printf("Enter node no : ");
                     scanf("%d", &nodeno);
                     
-                    if(delete(listno, nodeno) > 0)
+                    if(dlldelete(listno, nodeno) > 0)
                         printf("Deleted %d node form %d list\n", listno, nodeno);
                     else
                         printf("Please check information you have provied\n");
@@ -85,7 +87,7 @@ int main()
                     printf("Enter list no : ");
                     scanf("%d", &listno);
                     
-                    count = listsize(listno);
+                    count = dllsize(listno);
                     if(count < 0)
                         printf("Please check you have provied right list number\n");
                     else
@@ -95,7 +97,7 @@ int main()
                     printf("Enter list no : ");
                     scanf("%d", &listno);
                 
-                    count = listsize(listno);
+                    count = dllsize(listno);
                     
                     if(count < 0)
                         printf("Please check you have provied right list number\n");
@@ -107,7 +109,7 @@ int main()
                             fprintf(listfp, "List no : %d len :%d\ndata :\n\n%8d " , listno, count, 1);
                             for(int i = 1; i <= count; i++)
                             {
-                                sr =  llread(listno, i);
+                                sr =  dllread(listno, i);
                                 fprintf(listfp, "%d ", sr.data);
 
                                 if(i % 8 == 0)
@@ -123,11 +125,5 @@ int main()
                 printf("Incorrect choice\n");
         }
     }while(choice != 8);
-        
-
-
-
-
-    disk_update_config();
     fclose(diskfp);
 }
